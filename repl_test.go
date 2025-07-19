@@ -3,7 +3,7 @@ package main
 import "testing"
 
 func TestCleanInput(t *testing.T) {
-	cases := map[string]struct {
+	testcases := map[string]struct {
 		input    string
 		expected []string
 	}{
@@ -12,16 +12,18 @@ func TestCleanInput(t *testing.T) {
 		"capitals":          {input: "Hello WoRlD", expected: []string{"hello", "world"}},
 	}
 
-	for name, case := range cases {
-		actual := cleanInput(case.input)
-		if len(actual) != len(case.expected) {
-			t.Errorf("%s: length of actual, %#v, and expected, %#v, don't match", name, actual, case.expected)
+	for name, test := range testcases {
+		actual := cleanInput(test.input)
+		if len(actual) != len(test.expected) {
+			t.Errorf("%s: length of actual, %#v, and expected, %#v, don't match", name, actual, test.expected)
+			return
 		}
 		for i := range actual {
 			actualWord := actual[i]
-			expectedWord := case.expected[i]
+			expectedWord := test.expected[i]
 			if actualWord != expectedWord {
-				t.Errorf("%s: actual %#v and expected %#v does not match", name, actual, case.expected)
+				t.Errorf("%s: actual %#v and expected %#v does not match", name, actual, test.expected)
+				return
 			}
 		}
 	}
