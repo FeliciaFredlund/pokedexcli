@@ -11,12 +11,7 @@ type config struct {
 	pokeapiClient  pokeapi.Client
 	mapNextUrl     string
 	mapPreviousUrl string
-}
-
-type cliCommand struct {
-	name        string
-	description string
-	callback    func(*config) error
+	areaBaseUrl    string
 }
 
 func main() {
@@ -24,6 +19,7 @@ func main() {
 		cmds:          getCommands(),
 		pokeapiClient: pokeapi.NewClient(5*time.Second, time.Minute*5),
 		mapNextUrl:    "https://pokeapi.co/api/v2/location-area/?offset=0&limit=20",
+		areaBaseUrl:   "https://pokeapi.co/api/v2/location-area/",
 	}
 
 	replLoop(config)
@@ -45,6 +41,11 @@ func getCommands() map[string]cliCommand {
 			name:        "MapB",
 			description: "Displays the previous 20 areas",
 			callback:    commandMapBack,
+		},
+		"explore": {
+			name:        "Explore",
+			description: "Displays pokemon in the area",
+			callback:    commandExplore,
 		},
 		"exit": {
 			name:        "Exit",

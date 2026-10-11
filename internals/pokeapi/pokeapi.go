@@ -26,28 +26,28 @@ func NewClient(timeout, cacheInterval time.Duration) Client {
 // location: mt coronet
 // area: mt coronet 1f route 207
 
-// locationsMap = general list of areas
+// location = general list of areas
 // count = how many there are in total
 // next = url to the next page of areas
 // previous = url to the previous page of areas
-// locations = areas
+// areas
 // name = area's name
 // url = area's url
-type locationsMap struct {
-	Count     int    `json:"count"`
-	Next      string `json:"next"`
-	Previous  string `json:"previous"`
-	Locations []struct {
+type location struct {
+	//Count     int    `json:"count"`
+	Next     string `json:"next"`
+	Previous string `json:"previous"`
+	Areas    []struct {
 		Name string `json:"name"`
-		URL  string `json:"url"`
+		//URL  string `json:"url"`
 	} `json:"results"`
 }
 
 func (c *Client) GetLocations(url string) (locations []string, next, previous string, err error) {
-	area := locationsMap{}
+	location := location{}
 
 	if data, exists := c.cache.Get(url); exists {
-		err := json.Unmarshal(data, &area)
+		err := json.Unmarshal(data, &location)
 		if err != nil {
 			return nil, "", "", err
 		}
@@ -63,7 +63,7 @@ func (c *Client) GetLocations(url string) (locations []string, next, previous st
 			return nil, "", "", err
 		}
 
-		err = json.Unmarshal(data, &area)
+		err = json.Unmarshal(data, &location)
 		if err != nil {
 			return nil, "", "", err
 		}
@@ -71,11 +71,57 @@ func (c *Client) GetLocations(url string) (locations []string, next, previous st
 		c.cache.Add(url, data)
 	}
 
-	for _, location := range area.Locations {
+	for _, location := range location.Areas {
 		locations = append(locations, location.Name)
 	}
-	next = area.Next
-	previous = area.Previous
+	next = location.Next
+	previous = location.Previous
 
 	return locations, next, previous, nil
+}
+
+type area struct {
+	//ID                int    `json:"id"`
+	//Name              string `json:"name"`
+	PokemonEncounters []struct {
+		Pokemon struct {
+			Name string `json:"name"`
+			//URL  string `json:"url"`
+		} `json:"pokemon"`
+	} `json:"pokemon_encounters"`
+}
+
+func (c *Client) GetPokemons(url string) (pokemons []string, err error) {
+	area := area{}
+
+	if data, exists := c.cache.Get(url); exists {
+		err := json.Unmarshal(data, &area)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		response, err := http.Get(url)
+		if err != nil {
+			return nil, err
+		}
+		defer response.Body.Close()
+
+		data, err := io.ReadAll(response.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		err = json.Unmarshal(data, &area)
+		if err != nil {
+			return nil, err
+		}
+
+		c.cache.Add(url, data)
+	}
+
+	for _, pokemon := range area.PokemonEncounters {
+		pokemons = append(pokemons, pokemon.Pokemon.Name)
+	}
+
+	return pokemons, nil
 }

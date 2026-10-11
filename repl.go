@@ -25,7 +25,11 @@ func replLoop(config *config) {
 		}
 
 		if command, exists := config.cmds[input[0]]; exists {
-			if err := command.callback(config); err != nil {
+			var arg string
+			if len(input) > 1 {
+				arg = input[1]
+			}
+			if err := command.callback(config, arg); err != nil {
 				fmt.Println(err)
 			}
 		} else {
