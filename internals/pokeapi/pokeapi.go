@@ -2,8 +2,26 @@ package pokeapi
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
+	"time"
+
+	"github.com/FeliciaFredlund/pokedexcli/internals/pokecache"
 )
+
+type Client struct {
+	cache      pokecache.Cache
+	httpClient http.Client
+}
+
+func NewClient(timeout, cacheInterval time.Duration) Client {
+	return Client{
+		cache: pokecache.NewCache(cacheInterval),
+		httpClient: http.Client{
+			Timeout: timeout,
+		},
+	}
+}
 
 // location: mt coronet
 // area: mt coronet 1f route 207
@@ -25,19 +43,32 @@ type locationsMap struct {
 	} `json:"results"`
 }
 
-func GetLocations(url string) (locations []string, next, previous string, err error) {
-	response, err := http.Get(url)
-	if err != nil {
-		return nil, "", "", err
-	}
-	defer response.Body.Close()
-
-	decoder := json.NewDecoder(response.Body)
-
+func (c *Client) GetLocations(url string) (locations []string, next, previous string, err error) {
 	area := locationsMap{}
-	err = decoder.Decode(&area)
-	if err != nil {
-		return nil, "", "", err
+
+	if data, exists := c.cache.Get(url); exists {
+		err := json.Unmarshal(data, &area)
+		if err != nil {
+			return nil, "", "", err
+		}
+	} else {
+		response, err := http.Get(url)
+		if err != nil {
+			return nil, "", "", err
+		}
+		defer response.Body.Close()
+
+		data, err := io.ReadAll(response.Body)
+		if err != nil {
+			return nil, "", "", err
+		}
+
+		err = json.Unmarshal(data, &area)
+		if err != nil {
+			return nil, "", "", err
+		}
+
+		c.cache.Add(url, data)
 	}
 
 	for _, location := range area.Locations {
