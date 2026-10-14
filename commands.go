@@ -5,6 +5,8 @@ import (
 	"math/rand"
 	"os"
 	"time"
+
+	"github.com/FeliciaFredlund/pokedexcli/internals/pokeapi"
 )
 
 type cliCommand struct {
@@ -105,4 +107,33 @@ func commandCatch(config *config, pokemonName string) error {
 	config.pokedex[pokemonName] = pokemon
 
 	return nil
+}
+
+func commandInspect(config *config, pokemonName string) error {
+	pokemon, exists := config.pokedex[pokemonName]
+
+	if !exists {
+		fmt.Printf("You have not caught %s so you can't inspect it!", pokemonName)
+		return nil
+	}
+
+	printPokemon(pokemon)
+
+	return nil
+}
+
+func printPokemon(p pokeapi.Pokemon) {
+	fmt.Printf("Name: %s\n", p.Name)
+	fmt.Printf("Height: %d\n", p.Height)
+	fmt.Printf("Weight: %d\n", p.Weight)
+
+	fmt.Println("Stats:")
+	for _, stat := range p.Stats {
+		fmt.Printf("  -%s: %d\n", stat.Stat.Name, stat.BaseStat)
+	}
+
+	fmt.Println("Types:")
+	for _, t := range p.Types {
+		fmt.Printf("  - %s\n", t.Type.Name)
+	}
 }
