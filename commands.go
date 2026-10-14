@@ -113,7 +113,7 @@ func commandInspect(config *config, pokemonName string) error {
 	pokemon, exists := config.pokedex[pokemonName]
 
 	if !exists {
-		fmt.Printf("You have not caught %s so you can't inspect it!", pokemonName)
+		fmt.Printf("You have not caught %s so you can't inspect it!\n", pokemonName)
 		return nil
 	}
 
@@ -136,4 +136,18 @@ func printPokemon(p pokeapi.Pokemon) {
 	for _, t := range p.Types {
 		fmt.Printf("  - %s\n", t.Type.Name)
 	}
+}
+
+func commandPokedex(config *config, _ string) error {
+	if len(config.pokedex) == 0 {
+		fmt.Println("Your pokedex is empty. Go catch some pokemon!")
+		return nil
+	}
+
+	fmt.Println("Your Pokedex:")
+	for key := range config.pokedex {
+		fmt.Printf(" - %s\n", key)
+	}
+
+	return nil
 }
