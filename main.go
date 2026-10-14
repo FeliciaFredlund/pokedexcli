@@ -12,14 +12,18 @@ type config struct {
 	mapNextUrl     string
 	mapPreviousUrl string
 	areaBaseUrl    string
+	pokemonBaseUrl string
+	pokedex        map[string]pokeapi.Pokemon
 }
 
 func main() {
 	config := &config{
-		cmds:          getCommands(),
-		pokeapiClient: pokeapi.NewClient(5*time.Second, time.Minute*5),
-		mapNextUrl:    "https://pokeapi.co/api/v2/location-area/?offset=0&limit=20",
-		areaBaseUrl:   "https://pokeapi.co/api/v2/location-area/",
+		cmds:           getCommands(),
+		pokeapiClient:  pokeapi.NewClient(5*time.Second, time.Minute*5),
+		mapNextUrl:     "https://pokeapi.co/api/v2/location-area/?offset=0&limit=20",
+		areaBaseUrl:    "https://pokeapi.co/api/v2/location-area/",
+		pokemonBaseUrl: "https://pokeapi.co/api/v2/pokemon/",
+		pokedex:        map[string]pokeapi.Pokemon{},
 	}
 
 	replLoop(config)
@@ -46,6 +50,11 @@ func getCommands() map[string]cliCommand {
 			name:        "Explore",
 			description: "Displays pokemon in the area",
 			callback:    commandExplore,
+		},
+		"catch": {
+			name:        "Catch",
+			description: "Try to catch the specified pokemon",
+			callback:    commandCatch,
 		},
 		"exit": {
 			name:        "Exit",

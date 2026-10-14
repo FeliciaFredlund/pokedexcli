@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
+	"time"
 )
 
 type cliCommand struct {
@@ -66,16 +68,41 @@ func commandMapBack(config *config, _ string) error {
 
 func commandExplore(config *config, area string) error {
 	areaUrl := config.areaBaseUrl + area
-	pokemons, err := config.pokeapiClient.GetPokemons(areaUrl)
+	pokemonEncounters, err := config.pokeapiClient.GetPokemonsEncounters(areaUrl)
 	if err != nil {
 		return fmt.Errorf("getting the area's pokemon data failed")
 	}
 
 	fmt.Printf("Exploring %s...\n", area)
 	fmt.Println("Found pokemon:")
-	for _, pokemon := range pokemons {
+	for _, pokemon := range pokemonEncounters {
 		fmt.Println("-", pokemon)
 	}
+
+	return nil
+}
+
+func commandCatch(config *config, pokemonName string) error {
+	pokemonUrl := config.pokemonBaseUrl + pokemonName
+	pokemon, err := config.pokeapiClient.GetPokemon(pokemonUrl)
+	if err != nil || pokemon.Name == "" {
+		return fmt.Errorf("getting the pokemon's data failed")
+	}
+
+	fmt.Printf("Throwing a Pokeball at %s...\n", pokemonName)
+
+	// Randomly deciding if pokemon was caught.
+	// Number between 0 and pokemon's base experience is generated
+	// If it is below or equal to 80 it is caught
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	number := r.Intn(pokemon.BaseExperience)
+	if number > 80 {
+		fmt.Printf("%s escaped!\n", pokemonName)
+		return nil
+	}
+
+	fmt.Printf("%s was caught!\n", pokemonName)
+	config.pokedex[pokemonName] = pokemon
 
 	return nil
 }

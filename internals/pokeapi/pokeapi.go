@@ -91,7 +91,7 @@ type area struct {
 	} `json:"pokemon_encounters"`
 }
 
-func (c *Client) GetPokemons(url string) (pokemons []string, err error) {
+func (c *Client) GetPokemonsEncounters(url string) (pokemonEncounters []string, err error) {
 	area := area{}
 
 	if data, exists := c.cache.Get(url); exists {
@@ -120,8 +120,56 @@ func (c *Client) GetPokemons(url string) (pokemons []string, err error) {
 	}
 
 	for _, pokemon := range area.PokemonEncounters {
-		pokemons = append(pokemons, pokemon.Pokemon.Name)
+		pokemonEncounters = append(pokemonEncounters, pokemon.Pokemon.Name)
 	}
 
-	return pokemons, nil
+	return pokemonEncounters, nil
+}
+
+type Pokemon struct {
+	Name           string `json:"name"`
+	BaseExperience int    `json:"base_experience"`
+	Height         int    `json:"height"`
+	Weight         int    `json:"weight"`
+	Stats          []struct {
+		BaseStat int `json:"base_stat"`
+		Stat     struct {
+			Name string `json:"name"`
+		} `json:"stat"`
+	} `json:"stats"`
+	Types []struct {
+		Slot int `json:"slot"`
+		Type struct {
+			Name string `json:"name"`
+		} `json:"type"`
+	} `json:"types"`
+}
+
+func (c *Client) GetPokemon(url string) (pokemon Pokemon, err error) {
+	if data, exists := c.cache.Get(url); exists {
+		err := json.Unmarshal(data, &pokemon)
+		if err != nil {
+			return Pokemon{}, err
+		}
+	} else {
+		response, err := http.Get(url)
+		if err != nil {
+			return Pokemon{}, err
+		}
+		defer response.Body.Close()
+
+		data, err := io.ReadAll(response.Body)
+		if err != nil {
+			return Pokemon{}, err
+		}
+
+		err = json.Unmarshal(data, &pokemon)
+		if err != nil {
+			return Pokemon{}, err
+		}
+
+		c.cache.Add(url, data)
+	}
+
+	return pokemon, nil
 }
